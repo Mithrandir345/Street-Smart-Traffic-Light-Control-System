@@ -1,0 +1,6 @@
+#ifndef RESOURCE_H_INCLUDED
+#define RESOURCE_H_INCLUDED
+
+#define IDI_ICON 100
+
+#endif // RESOURCE_H_INCLUDED
