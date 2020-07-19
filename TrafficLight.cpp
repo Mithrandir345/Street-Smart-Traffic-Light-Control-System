@@ -8,20 +8,17 @@ TrafficLight::~TrafficLight()
 {
 
 }
-void TrafficLight::setLightPinOut(uint8_t mode, int redPin, int greenPin, int bluePin)
+void TrafficLight::setLightPinOut(uint8_t mode, int redPin, int greenPin)
 {
 	this->redPin = redPin;
 	this->greenPin = greenPin;
-	this->bluePin = bluePin;
 	pinMode(redPin, mode);
 	pinMode(greenPin, mode);
-	pinMode(bluePin, mode);
 }
 
-void TrafficLight::setLightColor(int redValue, int greenValue, int blueValue) {
-	analogWrite(redPin, redValue);
+void TrafficLight::setLightColor(int redValue, int greenValue) {
+	digitalWrite(redPin, redValue);
 	analogWrite(greenPin, greenValue);
-	analogWrite(bluePin, blueValue);
 }
 
 void TrafficLight::TrafficLightControl(unsigned long currentTime, unsigned long flashingInterval)
@@ -32,13 +29,13 @@ void TrafficLight::TrafficLightControl(unsigned long currentTime, unsigned long 
 		switch (lightState)
 		{
 		case GREEN:
-			setLightColor(0, 255, 0);
+			setLightColor(LOW, 255);
 			break;
 		case YELLOW:
-			setLightColor(255, 60, 0);
+			setLightColor(HIGH, 60);
 			break;
 		case RED:
-			setLightColor(255, 0, 0);
+			setLightColor(HIGH, 0);
 			break;
 		case FLASHINGRED:
 			flashingRed(currentTime, flashingInterval);
@@ -51,12 +48,16 @@ void TrafficLight::TrafficLightControl(unsigned long currentTime, unsigned long 
 		switch (lightState)
 		{
 		case GREEN:
+			setLightColor(LOW, 255);
 			break;
 		case YELLOW:
+			setLightColor(HIGH, 60);
 			break;
 		case RED:
+			setLightColor(HIGH, 0);
 			break;
 		case FLASHINGRED:
+			flashingRed(currentTime, flashingInterval);
 			break;
 		default:
 			break;
@@ -66,12 +67,16 @@ void TrafficLight::TrafficLightControl(unsigned long currentTime, unsigned long 
 		switch (lightState)
 		{
 		case GREEN:
+			setLightColor(LOW, 255);
 			break;
 		case YELLOW:
+			setLightColor(HIGH, 60);
 			break;
 		case RED:
+			setLightColor(HIGH, 0);
 			break;
 		case FLASHINGRED:
+			flashingRed(currentTime, flashingInterval);
 			break;
 		default:
 			break;
@@ -81,12 +86,16 @@ void TrafficLight::TrafficLightControl(unsigned long currentTime, unsigned long 
 		switch (lightState)
 		{
 		case GREEN:
+			setLightColor(LOW, 255);
 			break;
 		case YELLOW:
+			setLightColor(HIGH, 60);
 			break;
 		case RED:
+			setLightColor(HIGH, 0);
 			break;
 		case FLASHINGRED:
+			flashingRed(currentTime, flashingInterval);
 			break;
 		default:
 			break;
@@ -104,12 +113,12 @@ void TrafficLight::flashingRed(unsigned long currentTime,  unsigned long flashin
 		this->previousTime = currentTime;
 		if (isLedOn)
 		{
-			setLightColor(255, 0, 0);
+			setLightColor(HIGH, 0);
 			isLedOn = false;
 		}
 		else
 		{
-			setLightColor(0, 0, 0);
+			setLightColor(LOW, 0);
 			isLedOn = true;
 		}
 	}

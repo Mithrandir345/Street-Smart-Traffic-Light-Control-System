@@ -8,8 +8,8 @@
 #include <SoftwareSerial.h>
 #include "TrafficLight.h"
 #include "PID.h"
-const int readSensorPin = 6;
-const int transmitSensorPin = 3;
+
+const int readSensorPin = 4;
 int ifRead;
 unsigned int carCount = 0;
 unsigned long currentTime = 0;
@@ -19,24 +19,31 @@ unsigned long previousDetectedTime = 0;
 unsigned long timeError = 0;
 unsigned long timeDelay = 0;
 unsigned long previousTime = 0;
+unsigned long sensorTime = 0;
 unsigned long timeSinceGreen = 0;
 unsigned long timeSinceYellow = 0;
 bool runOnce[5] = { true,true,true,true,true};
-String string = "Number Of Objects Detected: "+carCount;
 String msg = "";
 bool targetDetected = false;
 bool enterSystem = false;
+bool flashingRed = false;
 TrafficLight lightNorth;
+TrafficLight lightSouth;
 PID pidController;
+char dataCarCount[32];
+char str[] = "Car Count:";
+char buffer[10];
 void setup()
  { // put your setup code here, to run once:
-  Serial.begin(9600);
+  Serial.begin(9600,SERIAL_8N1);
   pinMode(readSensorPin,INPUT);
-  pinMode(transmitSensorPin,OUTPUT);
-  lightNorth.setLightPinOut(OUTPUT, 11, 10, 9);
+  lightNorth.setLightPinOut(OUTPUT, 14, 10);
   lightNorth.directionState = lightNorth.NORTH;
   lightNorth.lightState = lightNorth.FLASHINGRED;
-  tone(3, 38000);
+  lightSouth.setLightPinOut(OUTPUT, 15, 6);
+  lightSouth.directionState = lightSouth.SOUTH;
+  lightSouth.lightState = lightSouth.FLASHINGRED;
+  Serial.flush();
  }
 
 void loop()
@@ -47,22 +54,23 @@ void loop()
 	if (Serial.available())
 	{
 		// get byte from USB serial port
-		while (Serial.available())
+		while (Serial.available() > 0)
 		{
-			msg = Serial.readString();// read the incoming data as string
+			msg = Serial.readString();// read the incoming data as string;
 		}
-		if (msg == "Hello")
+		if (msg == "COM3")
 		{
 			//Send data to usb serial port
-			Serial.write(" \nWelcome to Street Smart Traffic Lighting System !");
-			Serial.write(" \nEntering System...");
-			Serial.write(" \nPlease Wait...");
+			Serial.println("\nWelcome to Street Smart Traffic Lighting System !");
+			Serial.println("\nEntering System...");
+			Serial.println("\nPlease Wait...");
 		}
 		if (msg == "2682209")
 		{
 			Serial.write("SUCCESS");
 			enterSystem = true;
 			previousTime = millis();
+			sensorTime = millis();
 
 		}
 		if (msg == "QUIT")
@@ -70,9 +78,27 @@ void loop()
 			Serial.write("QUIT");
 			enterSystem = false;
 		}
+		if (msg == "RESET")
+		{
+			Serial.write("RESET");
+			for (int i = 0; i < 5; i++)
+			{
+				runOnce[i] = true;
+			}
+			flashingRed = false;
+			carCount = 0;
+			previousTime = millis();
+			sensorTime = millis();
+		}
+		if (msg == "FLASH")
+		{
+			Serial.write("FLASHINGRED");
+			flashingRed = true;
+		}
 		
 	}
-	else { Serial.flush();}
+	else { Serial.flush(); }
+	
 
 
 	if (enterSystem)
@@ -80,39 +106,53 @@ void loop()
 		currentTime = millis();
 
 		// Car Detection
-		delay(100);
-		ifRead = digitalRead(readSensorPin);
-		if (ifRead == LOW)
-		{
-			targetDetected = true;
-			detectedTime = millis();
-		}
-		else { targetDetected = false; }
-
-		if (targetDetected && lightNorth.lightState == lightNorth.GREEN)
-		{
-			carCount += 1;
-			string = "Car Count:" + (String)carCount;
-			Serial.print(string);
-			targetDetected = false;
-		}
-
+		
+			ifRead = digitalRead(readSensorPin);
+			sensorTime = currentTime;
+			if (ifRead == LOW)
+			{
+				targetDetected = true;
+				detectedTime = millis();
+			}
+			else { targetDetected = false; }
+			if (!targetDetected)
+			{
+				runOnce[5] = true;
+			}
+			if (targetDetected && lightNorth.lightState == lightNorth.GREEN && runOnce[5])
+			{
+				carCount += 1;
+				strcpy(dataCarCount, str);
+				strcat(dataCarCount, itoa(carCount,buffer,10));
+				Serial.println(dataCarCount);
+				runOnce[5] = false;
+			}
+		
 		if (currentTime - previousTime > 2000 && runOnce[0])
 		{
 			Serial.write("NORTHGREEN");
 			lightNorth.lightState = lightNorth.GREEN;
+			lightSouth.lightState = lightSouth.GREEN;
 			timeSinceGreen = currentTime;
 			runOnce[0] = false;
 
 		}
 		
-		if (currentTime - previousTime > 2000)
+		if (currentTime - previousTime > 2000 && !flashingRed)
 		{
 			if (carCount >= pidController.getTargetCarCount() || (currentTime - timeSinceGreen >= pidController.getTargetTimeValue()))
 			{
-				if (runOnce[1])
+				if (currentTime - timeSinceGreen >= pidController.getTargetTimeValue() && runOnce[4])
+				{
+					Serial.print("\nTarget Time Reached:");
+					Serial.print(pidController.getTargetTimeValue() / 1000, DEC);
+					Serial.print(" Seconds");
+					runOnce[4] = false;
+				}
+				if (runOnce[1] && (currentTime - timeSinceGreen) >= (pidController.getTargetTimeValue()+1000))
 				{
 					lightNorth.lightState = lightNorth.YELLOW;
+					lightSouth.lightState = lightSouth.YELLOW;
 					Serial.write("NORTHYELLOW");
 					timeSinceYellow = currentTime;
 					runOnce[1] = false;
@@ -120,6 +160,7 @@ void loop()
 				if (!runOnce[1] && currentTime - timeSinceYellow > 2000)
 				{
 					lightNorth.lightState = lightNorth.RED;
+					lightSouth.lightState = lightSouth.RED;
 					if (runOnce[2])
 					{
 						Serial.write("NORTHRED");
@@ -128,13 +169,24 @@ void loop()
 				}
 			}
 		}
-		lightNorth.TrafficLightControl(currentTime, 1000);
-		runOnce[3] = true;
+		if (flashingRed)
+		{
+			lightNorth.lightState = lightNorth.FLASHINGRED;
+			lightSouth.lightState = lightSouth.FLASHINGRED;
+			lightNorth.TrafficLightControl(timeSinceArduinoTurnedOn, 1000);
+			lightSouth.TrafficLightControl(timeSinceArduinoTurnedOn, 1000);
+		}
+		else {
+			lightNorth.TrafficLightControl(currentTime, 1000);
+			lightSouth.TrafficLightControl(currentTime, 1000);
+		}
 	}
 	else
 	{
 		lightNorth.lightState = lightNorth.FLASHINGRED;
+		lightSouth.lightState = lightSouth.FLASHINGRED;
 		lightNorth.TrafficLightControl(timeSinceArduinoTurnedOn, 1000);
+		lightSouth.TrafficLightControl(timeSinceArduinoTurnedOn, 1000);
 	}
 	
 }

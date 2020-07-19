@@ -6,8 +6,8 @@ class TrafficLight : public PID
 public:
 	TrafficLight();
 	~TrafficLight();
-	void setLightPinOut(uint8_t mode, int redPin, int greenPin, int bluePin);
-	void setLightColor(int redValue, int greenValue, int blueValue);
+	void setLightPinOut(uint8_t mode, int redPin, int greenPin);
+	void setLightColor(int redValue, int greenValue);
 	void TrafficLightControl(unsigned long currentTime, unsigned long flashingInterval);
 	enum lightingState { GREEN, YELLOW, RED, FLASHINGRED };
 	enum cardinalState { NORTH, EAST, SOUTH, WEST };

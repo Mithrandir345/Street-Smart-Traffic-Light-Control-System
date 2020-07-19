@@ -3,7 +3,7 @@
 
 PID::PID()
 {
-	targetTimeValue = 10000; // 60 seconds
+	targetTimeValue = 10000; // 10 seconds
 	targetCarCount = 5;
 	proportionalTimeGain = 0.1; // 10%
 	integrateTimeMax = 10000;
