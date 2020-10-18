@@ -1,72 +1,48 @@
-#include "PID.h"
+#pragma once
 
-
-PID::PID()
+class PID
 {
-	targetTimeValue = 10000; // 10 seconds
-	targetCarCount = 5;
-	proportionalTimeGain = 0.1; // 10%
-	integrateTimeMax = 10000;
-	integrateTimeMin = 6000;
-	integrateTimeError = 0;
-	derivativeTimeGain = 0.1; // 10%
+public:
+	PID();
+	~PID();
+	void calculateTimeError(unsigned long currentDetectedTime, unsigned long previousDetectTime);
+	void proportionalTimeError();
+	void derivativeTimeError();
+	void integrateTimeErrorValue();
+	void clampIntegratorTimeError();
+	void setTargetTimeValue(unsigned long timeValue);
 	
-}
 
-PID::~PID()
-{
+	unsigned int getTargetCarCount();
+	unsigned long getTargetTimeValue();
+	signed long getIntegrateTimeValue();
+	signed long getTimeError();
+	void UpdateTimePID();
+	void UpdateCarPID();
+private:
 
-}
+	// Time PID data members
+	signed long timeError;
+	signed long previousTimeError;
+	double proportionalTimeGain;
+	unsigned long proportionalTimeValue;
+	double integrateTimeGain;
+	unsigned long integrateTimeMax;
+	signed long integrateTimeMin;
+	signed long integrateTimeError;
+	signed long integrateTimeValue;
+	double derivativeTimeGain;
+	signed long derivativeTimeValue;
+	unsigned long timeElapsed;
+	unsigned long targetTimeValue;
 
-void PID::calculateTimeError(unsigned long currentDetectedTime, unsigned long previousDetectTime)
-{
-	timeElapsed += (currentDetectedTime - previousDetectTime);
-	timeError = targetTimeValue - timeElapsed;
-}
 
-void PID::proportionalTimeError()
-{
-	proportionalTimeValue = proportionalTimeGain * timeError;
-}
+	// Car PID data members
+	unsigned int targetCarCount;
+	signed int errorCarCount;
+	signed int previousErrorCarCount;
+	signed int proportionalCarCount;
+	signed int derivativeCarCount;
+	signed int integrateCarCount;
 
-void PID::derivativeTimeError()
-{
-	derivativeTimeValue = (timeError - previousTimeError) / (timeElapsed);
-}
-
-void PID::integrateTimeErrorValue()
-{
-	integrateTimeError += timeError;
-}
-
-void PID::clampIntegratorTimeError()
-{
-	if (integrateTimeError > integrateTimeMax)
-	{
-		integrateTimeError = integrateTimeMax;
-	}
-	else if (integrateTimeError < integrateTimeMin)
-	{
-		integrateTimeError = integrateTimeMin;
-	}
-	integrateTimeValue = (integrateTimeGain * integrateTimeError);
-}
-
-unsigned int PID::getTargetCarCount()
-{
-	return targetCarCount;
-}
-
-unsigned long PID::getTargetTimeValue()
-{
-	return targetTimeValue;
-}
-
-void PID::UpdateTimePID()
-{
-	targetTimeValue =  proportionalTimeValue + derivativeTimeValue + integrateTimeValue; // update the setpoint time value
-}
-void PID::UpdateCarPID()
-{
-	targetCarCount = proportionalCarCount + derivativeCarCount + integrateCarCount; // update the setpoint car count
-}
+};
