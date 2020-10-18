@@ -1,6 +1,7 @@
 #pragma once
 #include <Arduino.h>
 #include "PID.h"
+// TrafficLight Inherits PID
 class TrafficLight : public PID
 {
 public:
