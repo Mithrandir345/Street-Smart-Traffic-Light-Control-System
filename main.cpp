@@ -1,5 +1,5 @@
 /**
-Source Code: Street Smart Traffic Light Control GUI
+Source Code: Street Smart Traffic Light Control System GUI
 Created By: Anthony Dillon, Dayanara Serges, Christopher Ali
 Course Project: ECET 494L
 Date:10/18/2020
