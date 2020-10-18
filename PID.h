@@ -1,4 +1,5 @@
 #pragma once
+
 class PID
 {
 public:
@@ -9,12 +10,13 @@ public:
 	void derivativeTimeError();
 	void integrateTimeErrorValue();
 	void clampIntegratorTimeError();
-
+	void setTargetTimeValue(unsigned long timeValue);
 	
 
 	unsigned int getTargetCarCount();
 	unsigned long getTargetTimeValue();
-
+	signed long getIntegrateTimeValue();
+	signed long getTimeError();
 	void UpdateTimePID();
 	void UpdateCarPID();
 private:
@@ -30,7 +32,7 @@ private:
 	signed long integrateTimeError;
 	signed long integrateTimeValue;
 	double derivativeTimeGain;
-	unsigned long derivativeTimeValue;
+	signed long derivativeTimeValue;
 	unsigned long timeElapsed;
 	unsigned long targetTimeValue;
 
