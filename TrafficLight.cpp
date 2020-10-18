@@ -2,6 +2,7 @@
 
 TrafficLight::TrafficLight()
 {
+	
 }
 
 TrafficLight::~TrafficLight()
